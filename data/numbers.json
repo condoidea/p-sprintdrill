@@ -1,0 +1,133 @@
+{
+  "_meta": {
+    "description": "西検4級ドリル用 数字データ v1.0。number-to-wordsはJSで実装し、test_casesで検証する。rulesはミニ解説テンプレの元データ兼、誤答分類(ErrorTag)との対応表。"
+  },
+  "base_words": {
+    "0_15": ["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce","quince"],
+    "16_19": ["dieciséis","diecisiete","dieciocho","diecinueve"],
+    "20s": ["veinte","veintiuno","veintidós","veintitrés","veinticuatro","veinticinco","veintiséis","veintisiete","veintiocho","veintinueve"],
+    "tens": { "30":"treinta","40":"cuarenta","50":"cincuenta","60":"sesenta","70":"setenta","80":"ochenta","90":"noventa" },
+    "hundreds": { "100_exact":"cien","100_compound":"ciento","200":"doscientos","300":"trescientos","400":"cuatrocientos","500":"quinientos","600":"seiscientos","700":"setecientos","800":"ochocientos","900":"novecientos" },
+    "thousand": "mil",
+    "million": { "1":"un millón","plural":"millones" }
+  },
+  "levels": [
+    {
+      "lv": 1, "range": [0, 15], "tier": 3,
+      "label": "0〜15(個別暗記)",
+      "rules": ["0〜15は一語ずつ暗記。規則はない。"]
+    },
+    {
+      "lv": 2, "range": [16, 99], "tier": 2,
+      "label": "16〜99(一語綴りとy)",
+      "rules": [
+        "16〜29は一語に融合した綴り(dieciséis, veintiuno...)。30以上は分かち書き。",
+        "アクセント記号が付くのは dieciséis / veintidós / veintitrés / veintiséis の4つ。",
+        "y を使うのは『十の位 y 一の位』の間だけ(treinta y uno)。百の位の後には使わない。",
+        "男性名詞の前では uno → un(veintiún libros, treinta y un años)。数字単体の解答では veintiuno。"
+      ]
+    },
+    {
+      "lv": 3, "range": [100, 999], "tier": 1,
+      "label": "100〜999(cien/cientoと不規則百位)",
+      "rules": [
+        "ちょうど100は cien。101〜199は ciento(ciento uno — y は入れない)。",
+        "不規則な百位: 500 quinientos / 700 setecientos / 900 novecientos。それ以外は『数詞+cientos』(doscientos, trescientos...)。",
+        "百位は性一致する: doscientas personas / quinientas páginas。数字単体の解答では男性形。"
+      ]
+    },
+    {
+      "lv": 4, "range": [1000, 999999], "tier": 1,
+      "label": "1,000〜999,999(milの無冠詞)",
+      "rules": [
+        "1000は mil。un mil とは言わない。複数でも mil のまま(dos mil, diez mil)。",
+        "100,000は cien mil。101,000は ciento un mil。",
+        "千の位の前では uno → un(veintiún mil, treinta y un mil)。",
+        "構造は『(百〜の数) mil (百〜の数)』: 1996 = mil novecientos noventa y seis。"
+      ]
+    },
+    {
+      "lv": 5, "range": [1000000, 1000000], "tier": 1,
+      "label": "1,000,000(millón)",
+      "rules": [
+        "1,000,000は un millón(un が必要。mil との対比に注意)。millón にはアクセント記号。",
+        "2以上は millones(dos millones — アクセント消失)。",
+        "名詞が続くときは de が必要: un millón de habitantes。ただし端数が続くと de は不要(un millón quinientos mil yenes)。"
+      ]
+    }
+  ],
+  "error_tags": {
+    "y_misuse":          { "rule_ref": "Lv2-3 / Lv3-1", "template": "y は『十の位 y 一の位』の間だけ。{correct} が正しい形。" },
+    "cien_ciento":       { "rule_ref": "Lv3-1", "template": "ちょうど100は cien、101〜199は ciento。{correct}。" },
+    "irregular_hundreds":{ "rule_ref": "Lv3-2", "template": "500/700/900 は不規則: quinientos / setecientos / novecientos。{correct}。" },
+    "accent_missing":    { "rule_ref": "Lv2-2 / Lv5-1", "template": "アクセント記号に注意: {correct}。アクセントが付く数詞は dieciséis, veintidós, veintitrés, veintiséis, millón。" },
+    "mil_un":            { "rule_ref": "Lv4-1", "template": "1000は mil(× un mil)。millón との対比で覚える: mil は無冠詞、millón は un millón。" },
+    "millon_form":       { "rule_ref": "Lv5", "template": "百万は un millón、200万以上は millones(アクセント消失)。{correct}。" },
+    "fusion_split":      { "rule_ref": "Lv2-1", "template": "16〜29は一語(dieciséis)、30以上は分かち書き(treinta y uno)。{correct}。" },
+    "word_order":        { "rule_ref": "Lv4-4", "template": "語順は大きい桁から: {correct}。" }
+  },
+  "sampling_weights": {
+    "_note": "急所を踏む数を優先生成するための出題サンプリング規則。各レベル内で hot:cold = 7:3 程度。",
+    "hot_patterns": {
+      "lv2": ["16-19", "21-29", "x1(31,41,...)", "x6(treinta y seis等のアクセント無し対比)"],
+      "lv3": ["100", "101-110", "5xx", "7xx", "9xx", "x00"],
+      "lv4": ["1000", "100000", "x1000(21000等のun脱落形)", "mil + 5xx/7xx/9xx の複合", "1996型(年号)"],
+      "lv5": ["1000000"]
+    }
+  },
+  "test_cases": {
+    "_note": "numToWords(n) の単体テスト。全合格を実装完了条件とする。性指定なし(男性形デフォルト)。",
+    "cases": [
+      [0, "cero"],
+      [7, "siete"],
+      [15, "quince"],
+      [16, "dieciséis"],
+      [17, "diecisiete"],
+      [20, "veinte"],
+      [21, "veintiuno"],
+      [22, "veintidós"],
+      [23, "veintitrés"],
+      [26, "veintiséis"],
+      [29, "veintinueve"],
+      [30, "treinta"],
+      [31, "treinta y uno"],
+      [36, "treinta y seis"],
+      [47, "cuarenta y siete"],
+      [99, "noventa y nueve"],
+      [100, "cien"],
+      [101, "ciento uno"],
+      [110, "ciento diez"],
+      [116, "ciento dieciséis"],
+      [199, "ciento noventa y nueve"],
+      [200, "doscientos"],
+      [365, "trescientos sesenta y cinco"],
+      [500, "quinientos"],
+      [555, "quinientos cincuenta y cinco"],
+      [700, "setecientos"],
+      [777, "setecientos setenta y siete"],
+      [900, "novecientos"],
+      [999, "novecientos noventa y nueve"],
+      [1000, "mil"],
+      [1001, "mil uno"],
+      [1100, "mil cien"],
+      [1996, "mil novecientos noventa y seis"],
+      [2000, "dos mil"],
+      [2026, "dos mil veintiséis"],
+      [15000, "quince mil"],
+      [21000, "veintiún mil"],
+      [31000, "treinta y un mil"],
+      [100000, "cien mil"],
+      [101000, "ciento un mil"],
+      [123456, "ciento veintitrés mil cuatrocientos cincuenta y seis"],
+      [500000, "quinientos mil"],
+      [999999, "novecientos noventa y nueve mil novecientos noventa y nueve"],
+      [1000000, "un millón"]
+    ],
+    "cases_feminine_optional": [
+      [21, "veintiuna"],
+      [31, "treinta y una"],
+      [200, "doscientas"],
+      [500, "quinientas"]
+    ]
+  }
+}
