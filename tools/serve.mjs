@@ -1,9 +1,10 @@
 // 開発用の簡易静的サーバ(検証用。アプリ本体は任意の静的ホスティングで動く)
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
-import { extname, join, normalize } from "node:path";
+import { extname, join, normalize, resolve } from "node:path";
 
-const root = process.cwd();
+// 配信ルート: 第1引数 > 環境変数 SERVE_ROOT > カレントディレクトリ
+const root = resolve(process.argv[2] || process.env.SERVE_ROOT || process.cwd());
 const port = Number(process.env.PORT || 8741);
 const mime = {
   ".html": "text/html; charset=utf-8",

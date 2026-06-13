@@ -637,6 +637,24 @@ body {
   margin: 0 0 18px;
 }
 
+/* 動詞の通常出題: 活用指定(meta)を主役、指示文(prompt)をやや小さく(出題本体を強調) */
+.q-spec-hero .question-meta {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: normal;
+  margin: 0 0 6px;
+}
+
+.q-spec-hero .question-prompt {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: var(--color-text);
+  margin: 0 0 10px;
+}
+
 .hint-display {
   background: var(--color-accent-soft);
   border: 1px solid var(--color-border);

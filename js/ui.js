@@ -306,6 +306,10 @@ function renderQuestion() {
   const promptEl = document.getElementById("question-prompt");
   const jaEl = document.getElementById("question-ja");
 
+  // 動詞の通常出題では meta(活用指定)が出題本体なので、そちらを主役表示にする。
+  // 数字・gustarは prompt が出題内容なので既定のまま(下のrender関数内で制御)。
+  document.getElementById("question-card").classList.remove("q-spec-hero");
+
   if (item.moduleId === "verbs") {
     renderVerbQuestion(item, metaEl, promptEl, jaEl);
   } else {
@@ -358,6 +362,8 @@ function renderVerbQuestion(item, metaEl, promptEl, jaEl) {
   metaEl.textContent = personLabel ? `${inf} / ${tenseLabel} / ${personLabel}` : `${inf} / ${tenseLabel}`;
   promptEl.textContent = "正しい活用形を入力してください";
   jaEl.textContent = `日本語の意味: ${ja}`;
+  // 活用指定(meta)を主役、指示文(prompt)をやや小さく
+  document.getElementById("question-card").classList.add("q-spec-hero");
 }
 
 function renderNumberQuestion(item, metaEl, promptEl, jaEl) {
