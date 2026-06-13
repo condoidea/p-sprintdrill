@@ -169,7 +169,10 @@
       ["querer", "pret", "yo", "quise"],
       ["venir", "pret", "el", "vino"],
       ["saber", "pret", "yo", "supe"],
-      ["hablar", "pret", "el", "habló"]
+      ["hablar", "pret", "el", "habló"],
+      ["leer", "pret", "tu", "leíste"],
+      ["oír", "pret", "nosotros", "oímos"],
+      ["construir", "pret", "tu", "construiste"]
     ],
     "imperfecto": [
       ["ser", "imperf", "yo", "era"],
@@ -189,7 +192,8 @@
       ["saber", "fut", "el", "sabrá"],
       ["poner", "fut", "yo", "pondré"],
       ["haber", "fut", "el", "habrá"],
-      ["hablar", "fut", "yo", "hablaré"]
+      ["hablar", "fut", "yo", "hablaré"],
+      ["oír", "fut", "yo", "oiré"]
     ],
     "condicional": [
       ["decir", "cond", "yo", "diría"],
@@ -213,7 +217,13 @@
       ["llegar", "subj", "yo", "llegue"],
       ["empezar", "subj", "yo", "empiece"],
       ["jugar", "subj", "yo", "juegue"],
-      ["conocer", "subj", "yo", "conozca"]
+      ["conocer", "subj", "yo", "conozca"],
+      ["tener", "subj", "nosotros", "tengamos"],
+      ["decir", "subj", "nosotros", "digamos"],
+      ["conocer", "subj", "nosotros", "conozcamos"],
+      ["construir", "subj", "nosotros", "construyamos"],
+      ["pensar", "subj", "nosotros", "pensemos"],
+      ["poder", "subj", "nosotros", "podamos"]
     ],
     "imperativo": [
       ["tener", "imp_af", "tu", "ten"],

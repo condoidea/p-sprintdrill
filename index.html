@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>西検4級 追い込みドリル</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- データ読み込みエラー表示(P3-11) -->
+  <div id="load-error" class="card load-error" hidden role="alert"></div>
+
+  <!-- ============================================================ -->
+  <!-- ホーム画面 -->
+  <!-- ============================================================ -->
+  <section id="screen-home" class="screen" data-screen="home">
+    <header class="app-header">
+      <h1 class="app-title">西検4級 追い込みドリル</h1>
+      <button id="btn-open-settings" class="icon-button" type="button" aria-label="設定">⚙ 設定</button>
+    </header>
+
+    <div class="card countdown-card">
+      <div class="countdown-main">
+        <div class="countdown-number" id="countdown-days">--</div>
+        <div class="countdown-label">試験まで<span id="countdown-unit"></span></div>
+      </div>
+      <div class="countdown-detail">
+        <p id="countdown-date-text" class="muted">試験日が未設定です。設定画面で登録してください。</p>
+        <div class="goal-row">
+          <span class="goal-label">今日のノルマ</span>
+          <span class="goal-numbers"><strong id="goal-progress">0</strong> / <span id="goal-target">0</span> 項目</span>
+        </div>
+        <div class="progress-bar" role="progressbar" aria-label="今日のノルマ進捗" aria-valuemin="0" aria-valuemax="100" id="goal-progressbar">
+          <div class="progress-bar-fill" id="goal-progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="module-grid">
+      <article class="module-card" data-module="verbs">
+        <h2 class="module-title">動詞活用ドリル</h2>
+        <p class="module-desc">不定詞・時制・人称から正しい活用形を入力します。</p>
+        <dl class="module-stats">
+          <div><dt>習得済み</dt><dd><span class="stat-mastered" data-stat="mastered">0</span> / <span data-stat="total">0</span></dd></div>
+          <div><dt>学習中</dt><dd><span class="stat-learning" data-stat="learning">0</span></dd></div>
+        </dl>
+        <button class="btn btn-primary btn-start-session" data-module="verbs" type="button">動詞ドリルを始める</button>
+      </article>
+
+      <article class="module-card" data-module="numbers">
+        <h2 class="module-title">数字ドリル</h2>
+        <p class="module-desc">0〜1,000,000の数値をスペイン語の綴りで入力します。</p>
+        <dl class="module-stats">
+          <div><dt>習得済み</dt><dd><span class="stat-mastered" data-stat="mastered">0</span> / <span data-stat="total">0</span></dd></div>
+          <div><dt>学習中</dt><dd><span class="stat-learning" data-stat="learning">0</span></dd></div>
+        </dl>
+        <button class="btn btn-primary btn-start-session" data-module="numbers" type="button">数字ドリルを始める</button>
+      </article>
+    </div>
+
+    <div class="session-size-row">
+      <label for="home-session-size">1回の問題数:</label>
+      <select id="home-session-size">
+        <option value="10">10問</option>
+        <option value="20" selected>20問</option>
+        <option value="30">30問</option>
+        <option value="40">40問</option>
+      </select>
+      <button class="btn btn-primary btn-start-session" data-module="" type="button" id="btn-start-mixed">両方からまとめて出題</button>
+    </div>
+
+    <section class="card number-mode-card">
+      <h2 class="section-title">数字ドリルの出題モード</h2>
+      <div class="number-mode-options" id="number-mode-options" role="radiogroup" aria-label="数字ドリルの出題モード">
+        <label class="number-mode-option">
+          <input type="radio" name="number-mode" value="spell" checked>
+          <span class="number-mode-title">①数字→綴り</span>
+          <span class="number-mode-desc muted">表示された数値をスペイン語の綴りで入力</span>
+        </label>
+        <label class="number-mode-option">
+          <input type="radio" name="number-mode" value="to_number">
+          <span class="number-mode-title">②綴り→数字</span>
+          <span class="number-mode-desc muted">スペイン語の綴りを読んで数値を入力</span>
+        </label>
+        <label class="number-mode-option" id="number-mode-listen-option" hidden>
+          <input type="radio" name="number-mode" value="listen">
+          <span class="number-mode-title">③読み上げ→数字</span>
+          <span class="number-mode-desc muted">音声を聞いて数値を入力</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="card knowledge-map-card">
+      <h2 class="section-title">知識マップ</h2>
+
+      <div class="knowledge-map-block">
+        <h3 class="knowledge-map-subtitle">動詞: 時制×動詞タイプ</h3>
+        <div class="knowledge-map-scroll">
+          <table class="knowledge-map-table" id="verb-knowledge-map"></table>
+        </div>
+      </div>
+
+      <div class="knowledge-map-block">
+        <h3 class="knowledge-map-subtitle">数字: レベル別</h3>
+        <div class="knowledge-map-scroll">
+          <div class="knowledge-map-grid" id="number-knowledge-map"></div>
+        </div>
+      </div>
+
+      <ul class="knowledge-map-legend">
+        <li><span class="legend-swatch legend-new"></span>未学習</li>
+        <li><span class="legend-swatch legend-learning"></span>学習中</li>
+        <li><span class="legend-swatch legend-mastered"></span>習得済み</li>
+      </ul>
+    </section>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- セッション画面 -->
+  <!-- ============================================================ -->
+  <section id="screen-session" class="screen" data-screen="session" hidden>
+    <header class="session-header">
+      <button id="btn-quit-session" class="link-button" type="button">← 中断してホームへ</button>
+      <div class="session-progress-text">
+        <span id="session-progress-current">1</span> / <span id="session-progress-total">20</span> 問
+      </div>
+    </header>
+    <div class="progress-bar session-progress-bar" role="progressbar" aria-label="セッション進捗" aria-valuemin="0" aria-valuemax="100">
+      <div class="progress-bar-fill" id="session-progress-fill" style="width:0%"></div>
+    </div>
+
+    <div class="card question-card">
+      <p class="question-meta" id="question-meta"></p>
+      <p class="question-prompt" id="question-prompt"></p>
+      <p class="question-ja" id="question-ja"></p>
+
+      <div class="hint-display" id="hint-display" hidden></div>
+
+      <!-- 読み上げモード(SPEC 8.3 モード3): 再生ボタン・速度切替 -->
+      <div class="listen-controls" id="listen-controls" hidden>
+        <button type="button" class="btn btn-secondary btn-listen-play" id="btn-listen-play">▶ 再生</button>
+        <div class="listen-speed" role="radiogroup" aria-label="再生速度">
+          <label class="listen-speed-option">
+            <input type="radio" name="listen-speed" value="0.7" checked>
+            0.7x
+          </label>
+          <label class="listen-speed-option">
+            <input type="radio" name="listen-speed" value="1.0">
+            1.0x
+          </label>
+        </div>
+      </div>
+
+      <!-- 4択モード(SPEC 8.2): 選択肢ボタン -->
+      <div class="choice-grid" id="choice-grid" hidden></div>
+
+      <form id="answer-form" autocomplete="off">
+        <input type="text" id="answer-input" class="answer-input" inputmode="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="スペイン語で入力">
+
+        <div class="accent-keys" id="accent-keys" aria-label="アクセント記号入力補助">
+          <button type="button" class="accent-key" data-char="á">á</button>
+          <button type="button" class="accent-key" data-char="é">é</button>
+          <button type="button" class="accent-key" data-char="í">í</button>
+          <button type="button" class="accent-key" data-char="ó">ó</button>
+          <button type="button" class="accent-key" data-char="ú">ú</button>
+          <button type="button" class="accent-key" data-char="ñ">ñ</button>
+          <button type="button" class="accent-key" data-char="ü">ü</button>
+        </div>
+
+        <div class="answer-actions">
+          <button type="submit" class="btn btn-primary" id="btn-submit-answer">答える</button>
+        </div>
+      </form>
+
+      <div class="aux-actions">
+        <button type="button" class="btn btn-hint" id="btn-hint">ヒント</button>
+        <button type="button" class="btn btn-unknown" id="btn-unknown">わからない</button>
+      </div>
+    </div>
+
+    <!-- 誤答・わからない直後のミニ解説 -->
+    <div class="card feedback-card" id="feedback-card" hidden>
+      <p class="feedback-result" id="feedback-result"></p>
+      <p class="feedback-correct" id="feedback-correct"></p>
+      <p class="feedback-explanation" id="feedback-explanation"></p>
+      <p class="feedback-note">あとでもう一度出します。</p>
+      <button type="button" class="btn btn-primary" id="btn-next-question">次の問題へ</button>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- セッションサマリ画面 -->
+  <!-- ============================================================ -->
+  <section id="screen-summary" class="screen" data-screen="summary" hidden>
+    <header class="app-header">
+      <h1 class="app-title">セッション結果</h1>
+    </header>
+
+    <div class="card summary-card">
+      <div class="summary-rate">
+        <div class="summary-rate-number" id="summary-rate">0%</div>
+        <div class="summary-rate-label">正答率</div>
+      </div>
+      <dl class="summary-stats">
+        <div><dt>出題数</dt><dd id="summary-asked">0</dd></div>
+        <div><dt>正解(補助なし)</dt><dd id="summary-right">0</dd></div>
+        <div><dt>誤答・わからない</dt><dd id="summary-wrong">0</dd></div>
+      </dl>
+    </div>
+
+    <div class="card" id="summary-themes-card">
+      <h2 class="section-title">つまずいたテーマ</h2>
+      <ul class="theme-list" id="summary-theme-list"></ul>
+    </div>
+
+    <div class="summary-actions">
+      <button class="btn btn-primary" id="btn-retest" type="button">つまずいた問題を再テスト</button>
+      <button class="btn btn-secondary" id="btn-back-home" type="button">ホームへ戻る</button>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 設定画面 -->
+  <!-- ============================================================ -->
+  <section id="screen-settings" class="screen" data-screen="settings" hidden>
+    <header class="app-header">
+      <h1 class="app-title">設定</h1>
+      <button id="btn-close-settings" class="link-button" type="button">← ホームへ</button>
+    </header>
+
+    <div class="card settings-card">
+      <div class="settings-row">
+        <label for="setting-exam-date">試験日</label>
+        <input type="date" id="setting-exam-date">
+      </div>
+
+      <div class="settings-row settings-row-checkbox">
+        <label for="setting-lenient">
+          <input type="checkbox" id="setting-lenient">
+          寛容モード(アクセント記号のみの誤りを△として進める)
+        </label>
+      </div>
+
+      <div class="settings-row">
+        <label for="setting-session-size">セッションの問題数</label>
+        <select id="setting-session-size">
+          <option value="10">10問</option>
+          <option value="20">20問</option>
+          <option value="30">30問</option>
+          <option value="40">40問</option>
+        </select>
+      </div>
+
+      <div class="settings-row settings-row-checkbox">
+        <label for="setting-exclude-vosotros">
+          <input type="checkbox" id="setting-exclude-vosotros">
+          vosotros(君たち)の活用形を出題から除外する
+        </label>
+      </div>
+
+      <div class="settings-row">
+        <label for="setting-choice-ratio">4択/入力の比率</label>
+        <select id="setting-choice-ratio">
+          <option value="0">すべて入力式</option>
+          <option value="0.3">入力式中心(4択30%)</option>
+          <option value="0.5">半々(4択50%)</option>
+          <option value="0.7">4択中心(4択70%)</option>
+          <option value="1">すべて4択</option>
+        </select>
+      </div>
+
+      <div class="settings-row settings-row-checkbox">
+        <label for="setting-require-input-mastery">
+          <input type="checkbox" id="setting-require-input-mastery">
+          習得済み化には入力式での正解を最低1回要求する
+        </label>
+      </div>
+    </div>
+
+    <div class="card settings-card danger-zone">
+      <h2 class="section-title">データのリセット</h2>
+      <p class="muted">学習履歴・進捗をすべて削除します。元に戻せません。</p>
+      <button class="btn btn-danger" id="btn-reset-data" type="button">すべてのデータをリセット</button>
+      <div class="confirm-row" id="reset-confirm-row" hidden>
+        <p class="confirm-text">本当に削除しますか?この操作は取り消せません。</p>
+        <div class="confirm-buttons">
+          <button class="btn btn-danger" id="btn-reset-confirm" type="button">削除する</button>
+          <button class="btn btn-secondary" id="btn-reset-cancel" type="button">キャンセル</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script type="module" src="js/ui.js"></script>
+</body>
+</html>

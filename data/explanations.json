@@ -1,0 +1,78 @@
+{
+  "_meta": {
+    "description": "ErrorTag -> ミニ解説テンプレ。{verb}{tense}{form}{correct}を差し込んで表示する(SPEC 7.2/7.4)。"
+  },
+  "verbs": {
+    "accent_missing": {
+      "template": "アクセント記号の位置に注意。正しい形は {correct}。点過去1・3人称単数や一部の不規則形は語末にアクセントが付く。"
+    },
+    "stem_change_missed": {
+      "template": "{verb} は語幹母音変化(ブーツ型)動詞。yo/tú/él/ellos では語幹の母音が変わる: {correct}。nosotros/vosotrosでは変化しない。"
+    },
+    "stem_change_overapplied": {
+      "template": "ブーツの外(nosotros/vosotros)は変化しない原形語幹を使う。正しい形は {correct}。"
+    },
+    "pret_3rd_change_missed": {
+      "template": "{verb} のような-ir語幹変化動詞は、点過去の3人称(単数・複数)でのみ e→i / o→u になる(ブーツ型とは別ルール): {correct}。"
+    },
+    "wrong_person": {
+      "template": "入力は別の人称の形になっている。{verb} の {tense} で求められているのは {form} の形: {correct}。"
+    },
+    "wrong_tense": {
+      "template": "入力は別の時制・法の形になっている。{verb} の {tense} で求められている形は {correct}。"
+    },
+    "strong_pret_missed": {
+      "template": "{verb} の点過去は不規則な強変化語幹 + 無アクセント語尾(-e, -iste, -o, -imos, -isteis, -ieron)を使う: {correct}。"
+    },
+    "spelling_change_missed": {
+      "template": "発音を保つための正書法変化(c→qu / g→gu / z→c / gu→g)が必要。正しい形は {correct}。"
+    },
+    "subj_stem_wrong": {
+      "template": "接続法現在は不定詞の語幹からではなく、直説法yo形の語幹から作る: {correct}。"
+    },
+    "participle_irregular_missed": {
+      "template": "{verb} の過去分詞は不規則形: {correct}。"
+    },
+    "imperative_polarity": {
+      "template": "否定命令には接続法現在を使う: no + 接続法。正しい形は {correct}。"
+    },
+    "gustar_number_wrong": {
+      "template": "gustarタイプの動詞は主語(好きなもの)の単数・複数に動詞を一致させる。正しい形は {correct}。"
+    },
+    "gustar_pronoun_wrong": {
+      "template": "間接目的語代名詞(me/te/le/nos/os/les)が人称と一致していない。正しい形は {correct}。"
+    },
+    "other": {
+      "template": "正解は {correct}。{verb} の {tense}・{form} の活用形を確認しよう。"
+    }
+  },
+  "numbers": {
+    "y_misuse": {
+      "template": "y を使うのは『十の位 y 一の位』の間だけ。百の位の後には使わない。正しい形は {correct}。"
+    },
+    "cien_ciento": {
+      "template": "ちょうど100は cien、101〜199は ciento。正しい形は {correct}。"
+    },
+    "irregular_hundreds": {
+      "template": "500/700/900は不規則な百位: quinientos / setecientos / novecientos。正しい形は {correct}。"
+    },
+    "accent_missing": {
+      "template": "アクセント記号に注意。アクセントが付くのは dieciséis, veintidós, veintitrés, veintiséis, millón など。正しい形は {correct}。"
+    },
+    "mil_un": {
+      "template": "1000は mil(× un mil)。100,000は cien mil。正しい形は {correct}。"
+    },
+    "millon_form": {
+      "template": "100万は un millón、200万以上は millones(アクセント消失)。正しい形は {correct}。"
+    },
+    "fusion_split": {
+      "template": "16〜29は一語(dieciséis)、31以上は分かち書き(treinta y uno)。正しい形は {correct}。"
+    },
+    "word_order": {
+      "template": "数詞は大きい桁から並べる。正しい形は {correct}。"
+    },
+    "other": {
+      "template": "正解は {correct}。"
+    }
+  }
+}
