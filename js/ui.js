@@ -439,7 +439,7 @@ function handleChoiceSelect(choiceText) {
     btn.disabled = true;
   }
   const result = engine.submitAnswer(choiceText);
-  showFeedback(result);
+  showFeedback(result, choiceText);
 }
 
 // --- ヒント機構(SPEC 5) ---------------------------------------------------
@@ -515,17 +515,17 @@ function handleSubmit() {
     return;
   }
   const result = engine.submitAnswer(value);
-  showFeedback(result);
+  showFeedback(result, value);
 }
 
 function handleUnknown() {
   const result = engine.submitUnknown();
-  showFeedback(result);
+  showFeedback(result, null); // 「わからない」は入力なし → 差分表示しない
 }
 
 let comboCount = 0; // 連続ノーヒント正解数
 
-function showFeedback(result) {
+function showFeedback(result, submittedInput) {
   // 入力・補助ボタンを無効化(連打防止)
   document.getElementById("btn-submit-answer").disabled = true;
   document.getElementById("btn-hint").disabled = true;
@@ -543,21 +543,27 @@ function showFeedback(result) {
   // 全パターンでモーダル表示(解説を全画面で読めるようキーボードは閉じる)
   document.getElementById("answer-input").disabled = true;
   document.getElementById("answer-input").blur();
-  showFeedbackModal(result, clean);
+  showFeedbackModal(result, clean, submittedInput);
 
   // ノーヒント正解はモーダルに正解演出(コンボ・紙吹雪)を重ねる
   if (clean) celebrateCorrect(comboCount);
 }
 
-function showFeedbackModal(result, clean) {
+function showFeedbackModal(result, clean, submittedInput) {
   const overlay = document.getElementById("feedback-overlay");
   const sheet = document.getElementById("feedback-card");
   const resultEl = document.getElementById("feedback-result");
   const correctEl = document.getElementById("feedback-correct");
+  const diffEl = document.getElementById("feedback-diff");
   const explanationEl = document.getElementById("feedback-explanation");
   const noteEl = document.getElementById("feedback-note");
 
   sheet.classList.remove("feedback-correct-state", "feedback-partial-state", "feedback-wrong-state");
+  diffEl.hidden = true;
+  diffEl.innerHTML = "";
+
+  // 不正解・半正解で入力がある場合は、入力と正解を文字単位で並べて差分表示する
+  const showDiff = (result.result === "wrong" || result.result === "partial") && submittedInput != null;
 
   if (result.result === "correct") {
     sheet.classList.add("feedback-correct-state");
@@ -568,15 +574,22 @@ function showFeedbackModal(result, clean) {
   } else if (result.result === "partial") {
     sheet.classList.add("feedback-partial-state");
     resultEl.textContent = "△ 半正解(アクセント記号に注意)";
-    correctEl.textContent = `正解: ${result.correctText}`;
     explanationEl.textContent = result.explanation ?? "";
     noteEl.hidden = false;
   } else {
     sheet.classList.add("feedback-wrong-state");
     resultEl.textContent = result.result === "unknown" ? "✕ わからない" : "✕ 不正解";
-    correctEl.textContent = `正解: ${result.correctText}`;
     explanationEl.textContent = result.explanation ?? "";
     noteEl.hidden = false;
+  }
+
+  if (showDiff) {
+    // 差分表示時は重複する「正解: 〜」テキストは出さず(発音ボタンは残す)、差分の正解行に集約
+    correctEl.textContent = "";
+    diffEl.innerHTML = renderDiffHtml(submittedInput, result.correctText);
+    diffEl.hidden = false;
+  } else if (result.result !== "correct") {
+    correctEl.textContent = `正解: ${result.correctText}`;
   }
 
   setupSpeakButton(result.correctText);
@@ -585,6 +598,89 @@ function showFeedbackModal(result, clean) {
   sheet.scrollTop = 0;
   // ダイアログ本体にフォーカス(Enterはdocumentのkeydownで進行。ボタン直接フォーカスだと二重発火するため避ける)
   requestAnimationFrame(() => sheet.focus());
+}
+
+// --- 入力と正解の文字単位差分(SPEC 7.1の判定に合わせる) ----------------------
+
+/** 判定と同じ正規化(前後空白除去 + 小文字化 + 連続空白の圧縮)。アクセントは保持。 */
+function normalizeForDiff(s) {
+  return String(s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/**
+ * 入力文字列と正解文字列を編集距離(Levenshtein)で整列し、列ごとの対応を返す。
+ * @returns {{type:'same'|'diff'|'missing'|'extra', a:string, b:string}[]}
+ *   a=正解側の文字, b=入力側の文字('missing'は入力欠落, 'extra'は入力余分)
+ */
+function alignStrings(correct, input) {
+  const a = [...correct]; // 正解
+  const b = [...input];   // 入力
+  const n = a.length, m = b.length;
+  const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = 0; i <= n; i++) dp[i][0] = i;
+  for (let j = 0; j <= m; j++) dp[0][j] = j;
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i - 1][j - 1] + cost, dp[i - 1][j] + 1, dp[i][j - 1] + 1);
+    }
+  }
+  // バックトレースで列を復元
+  const cols = [];
+  let i = n, j = m;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && a[i - 1] === b[j - 1] && dp[i][j] === dp[i - 1][j - 1]) {
+      cols.push({ type: "same", a: a[i - 1], b: b[j - 1] }); i--; j--;
+    } else if (i > 0 && j > 0 && dp[i][j] === dp[i - 1][j - 1] + 1) {
+      cols.push({ type: "diff", a: a[i - 1], b: b[j - 1] }); i--; j--;
+    } else if (i > 0 && dp[i][j] === dp[i - 1][j] + 1) {
+      cols.push({ type: "missing", a: a[i - 1], b: "" }); i--; // 入力に欠落
+    } else {
+      cols.push({ type: "extra", a: "", b: b[j - 1] }); j--; // 入力に余分
+    }
+  }
+  cols.reverse();
+  return cols;
+}
+
+/** 整列結果を2行(入力/正解)のHTMLにする。差異セルを色分けし、欠落/余分はギャップ表示。 */
+function renderDiffHtml(rawInput, rawCorrect) {
+  const correct = normalizeForDiff(rawCorrect);
+  const input = normalizeForDiff(rawInput);
+  const cols = alignStrings(correct, input);
+
+  // 入力が正解とかけ離れている(一致文字が少ない)場合、文字整列は散らばって見づらい。
+  // その場合は文字単位の整列をやめ、シンプルな2行表示にフォールバックする。
+  const sameCount = cols.filter((c) => c.type === "same").length;
+  const denom = Math.max([...correct].length, [...input].length, 1);
+  if (sameCount / denom < 0.4) {
+    return (
+      `<div class="diff-line diff-plain"><span class="diff-label">あなた</span><span class="diff-chars dc-bad-plain">${escapeHtml(input) || "(空欄)"}</span></div>` +
+      `<div class="diff-line diff-plain"><span class="diff-label">正解</span><span class="diff-chars dc-good-plain">${escapeHtml(correct)}</span></div>`
+    );
+  }
+
+  const GAP = "·";
+  const cell = (ch, cls) => `<span class="dc ${cls}">${ch === " " ? "&nbsp;" : escapeHtml(ch)}</span>`;
+
+  const inputRow = cols.map((c) => {
+    if (c.type === "same") return cell(c.b, "dc-same");
+    if (c.type === "diff") return cell(c.b, "dc-bad");
+    if (c.type === "extra") return cell(c.b, "dc-bad");      // 余分に入れた文字
+    return cell(GAP, "dc-gap");                               // missing: 入力に欠落
+  }).join("");
+
+  const correctRow = cols.map((c) => {
+    if (c.type === "same") return cell(c.a, "dc-same");
+    if (c.type === "diff") return cell(c.a, "dc-good");
+    if (c.type === "missing") return cell(c.a, "dc-good");   // 本来必要だった文字
+    return cell(GAP, "dc-gap");                               // extra: 正解側は空
+  }).join("");
+
+  return (
+    `<div class="diff-line"><span class="diff-label">あなた</span><span class="diff-chars">${inputRow}</span></div>` +
+    `<div class="diff-line"><span class="diff-label">正解</span><span class="diff-chars">${correctRow}</span></div>`
+  );
 }
 
 /**

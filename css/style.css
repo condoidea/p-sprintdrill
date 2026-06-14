@@ -959,6 +959,53 @@ body {
 .btn-speak:active { background: var(--color-accent-soft); }
 .btn-speak.speaking { background: var(--color-accent-soft); border-color: var(--color-accent); }
 
+/* 入力と正解の文字単位差分表示(不正解・半正解時) */
+.feedback-diff {
+  margin: 0 0 12px;
+  overflow-x: auto;
+}
+
+.diff-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  white-space: nowrap;
+}
+.diff-line + .diff-line { margin-top: 4px; }
+
+.diff-label {
+  flex-shrink: 0;
+  width: 3.2em;
+  text-align: right;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.diff-chars {
+  font-family: "SF Mono", "Consolas", "Menlo", monospace;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+}
+
+/* 文字セル: 上下行で列を揃えるため等幅 */
+.dc {
+  display: inline-block;
+  min-width: 0.85em;
+  text-align: center;
+  border-radius: 3px;
+  padding: 1px 0;
+}
+.dc-same { color: var(--color-text); }
+.dc-good { color: var(--color-correct); background: var(--color-correct-bg); font-weight: 700; }
+.dc-bad  { color: var(--color-wrong); background: var(--color-wrong-bg); font-weight: 700; text-decoration: line-through; }
+.dc-gap  { color: var(--color-text-muted); opacity: 0.5; }
+
+/* かけ離れた入力時のシンプル2行表示 */
+.diff-plain .diff-chars { white-space: normal; word-break: break-word; }
+.dc-bad-plain { color: var(--color-wrong); text-decoration: line-through; }
+.dc-good-plain { color: var(--color-correct); font-weight: 700; }
+
 .feedback-explanation {
   font-size: 0.92rem;
   line-height: 1.65;
