@@ -924,12 +924,40 @@ body {
 .feedback-partial-state .feedback-result { color: var(--color-partial); }
 .feedback-wrong-state .feedback-result { color: var(--color-wrong); }
 
+.feedback-correct-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  flex-wrap: wrap;
+}
+
 .feedback-correct {
   font-size: 1.15rem;
   font-weight: 700;
   font-family: var(--font-display);
-  margin: 0 0 8px;
+  margin: 0;
 }
+
+/* 正解表示画面の発音ボタン */
+.btn-speak {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-accent-dark);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-speak:active { background: var(--color-accent-soft); }
+.btn-speak.speaking { background: var(--color-accent-soft); border-color: var(--color-accent); }
 
 .feedback-explanation {
   font-size: 0.92rem;
@@ -953,7 +981,7 @@ body {
 .celebrate-layer {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 60; /* フィードバックモーダル(50)より前面。pointer-events:none でタップは透過 */
   pointer-events: none;
   overflow: hidden;
 }

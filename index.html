@@ -185,7 +185,10 @@
       <div class="feedback-backdrop" id="feedback-backdrop"></div>
       <div class="feedback-sheet" id="feedback-card" role="dialog" aria-modal="true" aria-live="assertive" tabindex="-1">
         <p class="feedback-result" id="feedback-result"></p>
-        <p class="feedback-correct" id="feedback-correct"></p>
+        <div class="feedback-correct-row">
+          <p class="feedback-correct" id="feedback-correct"></p>
+          <button type="button" class="btn-speak" id="btn-speak" aria-label="発音を聞く" hidden>🔊</button>
+        </div>
         <p class="feedback-explanation" id="feedback-explanation"></p>
         <p class="feedback-note" id="feedback-note">あとでもう一度出します。</p>
         <button type="button" class="btn btn-primary" id="btn-next-question">次の問題へ</button>

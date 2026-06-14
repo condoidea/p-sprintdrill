@@ -71,15 +71,18 @@ function initSpeechSupport() {
  * @param {number} value
  * @param {number} rate - 0.7 | 1.0
  */
-function speakNumber(value, rate) {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  const text = numbers.numToWords(value);
+function speakSpanish(text, rate = 1.0) {
+  if (typeof window === "undefined" || !window.speechSynthesis || !text) return;
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = "es-ES";
   if (speechVoice) utter.voice = speechVoice;
   utter.rate = rate;
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utter);
+}
+
+function speakNumber(value, rate) {
+  speakSpanish(numbers.numToWords(value), rate);
 }
 
 // -----------------------------------------------------------------------
@@ -281,8 +284,6 @@ function startSession(moduleId) {
   const size = parseInt(document.getElementById("home-session-size").value, 10);
   engine.startSession({ moduleId: moduleId || null, size, mode: MODES.MIXED, numberMode: selectedNumberMode });
   comboCount = 0;
-  clearTimeout(celebrateTimer);
-  celebrateTimer = null;
   showScreen("session");
   renderQuestion();
 }
@@ -507,11 +508,6 @@ function escapeHtml(s) {
 // --- 解答送信・「わからない」 -----------------------------------------------
 
 function handleSubmit() {
-  // 正解演出の自動進行待ち中のEnterは「今すぐ次へ」として扱う(再送信しない)
-  if (celebrateTimer !== null) {
-    handleNextQuestion();
-    return;
-  }
   const input = document.getElementById("answer-input");
   const value = input.value;
   if (value.trim() === "") {
@@ -527,8 +523,7 @@ function handleUnknown() {
   showFeedback(result);
 }
 
-let comboCount = 0;          // 連続ノーヒント正解数
-let celebrateTimer = null;   // 演出後の自動進行タイマー
+let comboCount = 0; // 連続ノーヒント正解数
 
 function showFeedback(result) {
   // 入力・補助ボタンを無効化(連打防止)
@@ -540,34 +535,21 @@ function showFeedback(result) {
     btn.disabled = true;
   }
 
-  // ノーヒントの完全正解 → 演出して自動で次へ(コンボ加算)。それ以外はモーダルで解説。
-  if (result.result === "correct" && !result.assisted) {
-    comboCount += 1;
-    celebrateCorrect(comboCount);
-    // 入力欄は無効化せずフォーカスも保持 → モバイルのソフトキーボードを維持して流れを止めない。
-    // 演出中の再送信は handleSubmit / keydown 側でガードする。
-    scheduleAutoAdvance();
-    return;
-  }
+  // ノーヒントの完全正解のみコンボ加算。それ以外(誤答/△/ヒント使用/わからない)はリセット。
+  const clean = result.result === "correct" && !result.assisted;
+  if (clean) comboCount += 1;
+  else comboCount = 0;
 
-  // ここからは復習対象(コンボはリセット)
-  comboCount = 0;
+  // 全パターンでモーダル表示(解説を全画面で読めるようキーボードは閉じる)
   document.getElementById("answer-input").disabled = true;
-  document.getElementById("answer-input").blur(); // 解説を全画面で読めるようキーボードを閉じる
-  showFeedbackModal(result);
+  document.getElementById("answer-input").blur();
+  showFeedbackModal(result, clean);
+
+  // ノーヒント正解はモーダルに正解演出(コンボ・紙吹雪)を重ねる
+  if (clean) celebrateCorrect(comboCount);
 }
 
-function scheduleAutoAdvance() {
-  clearTimeout(celebrateTimer);
-  // コンボが伸びるほど演出をやや長く見せる(上限あり)
-  const dur = Math.min(750 + comboCount * 40, 1100);
-  celebrateTimer = setTimeout(() => {
-    celebrateTimer = null;
-    handleNextQuestion();
-  }, dur);
-}
-
-function showFeedbackModal(result) {
+function showFeedbackModal(result, clean) {
   const overlay = document.getElementById("feedback-overlay");
   const sheet = document.getElementById("feedback-card");
   const resultEl = document.getElementById("feedback-result");
@@ -578,10 +560,9 @@ function showFeedbackModal(result) {
   sheet.classList.remove("feedback-correct-state", "feedback-partial-state", "feedback-wrong-state");
 
   if (result.result === "correct") {
-    // 補助付き正解
     sheet.classList.add("feedback-correct-state");
-    resultEl.textContent = "○ 正解(ヒント使用)";
-    correctEl.textContent = "";
+    resultEl.textContent = result.assisted ? "○ 正解(ヒント使用)" : "○ 正解";
+    correctEl.textContent = result.correctText;
     explanationEl.textContent = "";
     noteEl.hidden = !result.requeue;
   } else if (result.result === "partial") {
@@ -598,10 +579,35 @@ function showFeedbackModal(result) {
     noteEl.hidden = false;
   }
 
+  setupSpeakButton(result.correctText);
+
   overlay.hidden = false;
   sheet.scrollTop = 0;
   // ダイアログ本体にフォーカス(Enterはdocumentのkeydownで進行。ボタン直接フォーカスだと二重発火するため避ける)
   requestAnimationFrame(() => sheet.focus());
+}
+
+/**
+ * 正解表示のスピーカーボタンを設定する。
+ * 発音対象は動詞の活用形と数字の綴りモードのみ(数字入力モードや音声未対応端末では非表示)。
+ * @param {string} correctText
+ */
+function setupSpeakButton(correctText) {
+  const btn = document.getElementById("btn-speak");
+  const item = engine.getSessionView()?.item;
+  let speakText = null;
+  if (item && correctText) {
+    if (item.moduleId === "verbs") speakText = correctText;
+    else if (item.moduleId === "numbers" && item.payload.mode === "spell") speakText = correctText;
+  }
+
+  if (speakText && speechVoice) {
+    btn.hidden = false;
+    btn.onclick = () => speakSpanish(speakText, 1.0);
+  } else {
+    btn.hidden = true;
+    btn.onclick = null;
+  }
 }
 
 function hideFeedbackModal() {
@@ -670,8 +676,7 @@ function prefersReducedMotion() {
 }
 
 function handleNextQuestion() {
-  clearTimeout(celebrateTimer);
-  celebrateTimer = null;
+  if (window.speechSynthesis) window.speechSynthesis.cancel(); // 発音再生中なら止める
   const layer = document.getElementById("celebrate-layer");
   if (layer) layer.innerHTML = "";
   engine.nextQuestion();
@@ -820,8 +825,7 @@ function bindEvents() {
   document.getElementById("btn-next-question").addEventListener("click", handleNextQuestion);
   document.getElementById("btn-quit-session").addEventListener("click", () => {
     if (confirm("セッションを中断してホームに戻りますか?(この問題までの記録は保存されます)")) {
-      clearTimeout(celebrateTimer);
-      celebrateTimer = null;
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
       hideFeedbackModal();
       const layer = document.getElementById("celebrate-layer");
       if (layer) layer.innerHTML = "";
@@ -846,23 +850,14 @@ function bindEvents() {
     if (screens.session.hidden) return;
     const modalVisible = !document.getElementById("feedback-overlay").hidden;
 
-    // 解説モーダル表示中のEnter → 次へ(入力欄はblur済みなのでform submitとは競合しない)
+    // モーダル表示中のEnter → 次へ(入力欄はblur済みなのでform submitとは競合しない)
     if (e.key === "Enter" && modalVisible) {
       e.preventDefault();
       handleNextQuestion();
       return;
     }
-    // 正解演出中のEnter: 入力欄にフォーカスがある場合は form submit 側で処理(二重発火回避)。
-    // 4択など入力欄非フォーカス時はここで即進行させる。
-    if (e.key === "Enter" && celebrateTimer !== null) {
-      if (document.activeElement !== document.getElementById("answer-input")) {
-        e.preventDefault();
-        handleNextQuestion();
-      }
-      return;
-    }
 
-    if (!modalVisible && celebrateTimer === null && !document.getElementById("choice-grid").hidden && /^[1-4]$/.test(e.key)) {
+    if (!modalVisible && !document.getElementById("choice-grid").hidden && /^[1-4]$/.test(e.key)) {
       const idx = Number(e.key) - 1;
       const btn = document.querySelector(`#choice-grid .btn-choice[data-choice-index="${idx}"]`);
       if (btn && !btn.disabled) {
