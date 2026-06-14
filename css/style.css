@@ -614,54 +614,80 @@ body {
 
 .question-card {
   text-align: center;
+  padding: 16px;
+}
+
+@media (max-width: 600px) {
+  .question-card { padding: 14px 14px 16px; }
+  /* セッション画面はソフトキーボードで下部が隠れる前提。上部を詰める */
+  #screen-session { padding-top: 4px; }
+  .session-progress-bar { margin-bottom: 10px; }
 }
 
 .question-meta {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--color-text-muted);
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   letter-spacing: 0.02em;
 }
 
 .question-prompt {
   font-family: var(--font-display);
-  font-size: 1.9rem;
+  font-size: 1.55rem;
   font-weight: 600;
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   word-break: break-word;
 }
 
 .question-ja {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: var(--color-text-muted);
-  margin: 0 0 18px;
+  margin: 0 0 12px;
 }
 
 /* 動詞の通常出題: 活用指定(meta)を主役、指示文(prompt)をやや小さく(出題本体を強調) */
 .q-spec-hero .question-meta {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.45rem;
   font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: normal;
+  margin: 0 0 4px;
+}
+
+.q-spec-hero .question-prompt {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin: 0 0 8px;
+}
+
+/* gustar型: 変化させる動詞(問題の本体)を大きく見せる(SPEC 11.3) */
+.q-gustar .question-meta {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
   color: var(--color-text);
   letter-spacing: normal;
   margin: 0 0 6px;
 }
 
-.q-spec-hero .question-prompt {
+.q-gustar .question-prompt {
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 500;
   color: var(--color-text);
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 
 .hint-display {
   background: var(--color-accent-soft);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 16px;
-  font-size: 1.2rem;
+  padding: 9px 14px;
+  margin-bottom: 10px;
+  font-size: 1.15rem;
   letter-spacing: 0.12em;
   display: flex;
   align-items: baseline;
@@ -776,10 +802,10 @@ body {
 
 .answer-input {
   width: 100%;
-  min-height: 52px;
-  font-size: 1.3rem;
+  min-height: 48px;
+  font-size: 1.15rem;
   text-align: center;
-  padding: 10px 14px;
+  padding: 9px 14px;
   border: 2px solid var(--color-border);
   border-radius: 8px;
   font-family: var(--font-body);
@@ -796,14 +822,14 @@ body {
   display: flex;
   justify-content: center;
   gap: 6px;
-  margin: 10px 0;
+  margin: 8px 0;
   flex-wrap: wrap;
 }
 
 .accent-key {
-  min-width: 44px;
-  min-height: 44px;
-  font-size: 1.1rem;
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 1.05rem;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-surface);
@@ -820,7 +846,7 @@ body {
 }
 
 .answer-actions {
-  margin: 14px 0 16px;
+  margin: 10px 0 12px;
 }
 
 .answer-actions .btn {
@@ -838,60 +864,188 @@ body {
   }
 }
 
-/* --- フィードバック(誤答・わからない直後のミニ解説) --- */
+/* --- フィードバック(誤答・△・わからない): スクロール不要のモーダル --- */
 
-.feedback-card {
-  border-left: 4px solid var(--color-border);
+.feedback-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;       /* モバイル: ボトムシート */
+  justify-content: center;
 }
 
-.feedback-correct-state {
-  background: var(--color-correct-bg);
-  border-left-color: var(--color-correct);
+.feedback-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(31, 27, 20, 0.42);
+  animation: fb-fade 0.18s ease;
 }
-.feedback-partial-state {
-  background: var(--color-partial-bg);
-  border-left-color: var(--color-partial);
+
+.feedback-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-radius: 16px 16px 0 0;
+  border-top: 5px solid var(--color-border);
+  box-shadow: 0 -6px 24px rgba(31, 27, 20, 0.18);
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  animation: fb-slide-up 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
-.feedback-wrong-state {
-  background: var(--color-wrong-bg);
-  border-left-color: var(--color-wrong);
+
+@media (min-width: 600px) {
+  .feedback-overlay { align-items: center; }
+  .feedback-sheet {
+    border-radius: 14px;
+    border-top: none;
+    border-left: 5px solid var(--color-border);
+    margin: 0 16px;
+    animation: fb-pop 0.2s cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
 }
+
+@keyframes fb-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fb-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes fb-pop { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.feedback-partial-state { border-color: var(--color-partial); background: var(--color-partial-bg); }
+.feedback-wrong-state { border-color: var(--color-wrong); background: var(--color-wrong-bg); }
+.feedback-correct-state { border-color: var(--color-correct); background: var(--color-correct-bg); }
 
 .feedback-result {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
   margin: 0 0 6px;
 }
-.feedback-correct-state .feedback-result {
-  color: var(--color-correct);
-}
-.feedback-partial-state .feedback-result {
-  color: var(--color-partial);
-}
-.feedback-wrong-state .feedback-result {
-  color: var(--color-wrong);
-}
+.feedback-correct-state .feedback-result { color: var(--color-correct); }
+.feedback-partial-state .feedback-result { color: var(--color-partial); }
+.feedback-wrong-state .feedback-result { color: var(--color-wrong); }
 
 .feedback-correct {
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-family: var(--font-display);
   margin: 0 0 8px;
 }
 
 .feedback-explanation {
-  font-size: 0.95rem;
-  line-height: 1.7;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  text-align: left;
   margin: 0 0 8px;
 }
 
 .feedback-note {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--color-text-muted);
   margin: 0 0 14px;
 }
 
-.feedback-card .btn {
+.feedback-sheet .btn {
   width: 100%;
+}
+
+/* --- 正解演出(連続正解でやや豪華に) --- */
+
+.celebrate-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* 中央のチェックリング */
+.celebrate-ring {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 -48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: #fff;
+  background: var(--color-correct);
+  box-shadow: 0 6px 24px rgba(47, 122, 79, 0.45);
+  animation: celebrate-pop 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+}
+
+@keyframes celebrate-pop {
+  0%   { transform: scale(0.3); opacity: 0; }
+  35%  { transform: scale(1.12); opacity: 1; }
+  70%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0; }
+}
+
+/* コンボ表示 */
+.combo-badge {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-accent-dark);
+  text-align: center;
+  white-space: nowrap;
+  animation: combo-rise 0.9s ease forwards;
+}
+.combo-badge .combo-x { font-size: 2.2rem; line-height: 1; }
+.combo-badge .combo-label { display: block; font-size: 0.8rem; letter-spacing: 0.1em; margin-top: 2px; }
+
+@keyframes combo-rise {
+  0%   { transform: translate(-50%, 10px); opacity: 0; }
+  20%  { transform: translate(-50%, 0); opacity: 1; }
+  80%  { transform: translate(-50%, 0); opacity: 1; }
+  100% { transform: translate(-50%, -14px); opacity: 0; }
+}
+
+/* 紙吹雪パーティクル */
+.celebrate-particle {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  will-change: transform, opacity;
+  animation: confetti-fly var(--p-dur, 0.9s) ease-out forwards;
+}
+
+@keyframes confetti-fly {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--p-x), var(--p-y)) rotate(var(--p-rot)); opacity: 0; }
+}
+
+/* 出題カードの正解フラッシュ */
+.question-card.flash-correct {
+  animation: card-flash 0.6s ease;
+}
+@keyframes card-flash {
+  0%   { box-shadow: var(--shadow-card); }
+  30%  { box-shadow: 0 0 0 3px var(--color-correct), 0 4px 18px rgba(47, 122, 79, 0.35); }
+  100% { box-shadow: var(--shadow-card); }
+}
+
+/* 高コンボ時はリングを暖色寄りに強調 */
+.celebrate-ring.tier-hot { background: linear-gradient(135deg, #e8a32c, #d8642a); box-shadow: 0 6px 28px rgba(216, 100, 42, 0.5); }
+.combo-badge.tier-hot { color: #c2541f; }
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback-backdrop, .feedback-sheet { animation: none; }
+  .celebrate-ring { animation: celebrate-pop-reduced 0.4s ease forwards; }
+  .celebrate-particle { display: none; }
+  .combo-badge { animation: combo-rise-reduced 0.6s ease forwards; }
+  .question-card.flash-correct { animation: none; }
+  @keyframes celebrate-pop-reduced { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes combo-rise-reduced { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
 }
 
 /* ===========================================================

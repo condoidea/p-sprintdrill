@@ -180,14 +180,20 @@
       </div>
     </div>
 
-    <!-- 誤答・わからない直後のミニ解説 -->
-    <div class="card feedback-card" id="feedback-card" hidden>
-      <p class="feedback-result" id="feedback-result"></p>
-      <p class="feedback-correct" id="feedback-correct"></p>
-      <p class="feedback-explanation" id="feedback-explanation"></p>
-      <p class="feedback-note">あとでもう一度出します。</p>
-      <button type="button" class="btn btn-primary" id="btn-next-question">次の問題へ</button>
+    <!-- 誤答・△・補助付き正解・わからない: スクロール不要のモーダル(SPEC 7.4) -->
+    <div class="feedback-overlay" id="feedback-overlay" hidden>
+      <div class="feedback-backdrop" id="feedback-backdrop"></div>
+      <div class="feedback-sheet" id="feedback-card" role="dialog" aria-modal="true" aria-live="assertive" tabindex="-1">
+        <p class="feedback-result" id="feedback-result"></p>
+        <p class="feedback-correct" id="feedback-correct"></p>
+        <p class="feedback-explanation" id="feedback-explanation"></p>
+        <p class="feedback-note" id="feedback-note">あとでもう一度出します。</p>
+        <button type="button" class="btn btn-primary" id="btn-next-question">次の問題へ</button>
+      </div>
     </div>
+
+    <!-- 正解演出レイヤー(連続正解でやや豪華に) -->
+    <div class="celebrate-layer" id="celebrate-layer" aria-hidden="true"></div>
   </section>
 
   <!-- ============================================================ -->
