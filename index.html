@@ -302,5 +302,14 @@
 </div>
 
 <script type="module" src="js/ui.js"></script>
+<script>
+  // Service Worker 登録: オフライン対応 + オンライン起動時の自動更新
+  // (登録先は相対パス。GitHub Pagesのサブパス配信でもスコープが正しく当たる)
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+</script>
 </body>
 </html>
