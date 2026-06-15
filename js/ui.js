@@ -712,10 +712,26 @@ function hideFeedbackModal() {
 }
 
 /**
- * 正解演出(SPEC外のUX強化)。連続正解でやや豪華にする。
+ * 連続正解数から演出ティアを決める。streakが伸びるほど派手・暖色寄りになる。
+ */
+function comboTier(streak) {
+  if (streak >= 20) return { i: 5, cls: "tier-legend", emoji: "👑", label: "無双！", colors: ["#ffd54a", "#ff8a3d", "#ff5252", "#c2185b", "#fff3b0"] };
+  if (streak >= 15) return { i: 4, cls: "tier-blaze", emoji: "🔥", label: "止まらない！", colors: ["#ff7043", "#ff5252", "#ffa726", "#ffd54a"] };
+  if (streak >= 10) return { i: 3, cls: "tier-fire", emoji: "🔥", label: "ファイヤー！", colors: ["#ff9800", "#ff7043", "#f4511e", "#ffca28"] };
+  if (streak >= 7) return { i: 2, cls: "tier-hot", emoji: "⚡", label: "絶好調！", colors: ["#7e57c2", "#5c6bc0", "#26a69a", "#ffca28"] };
+  if (streak >= 4) return { i: 1, cls: "tier-warm", emoji: "✨", label: "好調！", colors: ["#26a69a", "#66bb6a", "#9ccc65", "#ffca28"] };
+  return { i: 0, cls: "tier-base", emoji: "✓", label: "コンボ", colors: ["#3d6b5c", "#2f7a4f", "#8bc6a3", "#e8a32c"] };
+}
+
+/**
+ * 正解演出(SPEC外のUX強化)。連続正解で段階的に豪華にし、節目(5の倍数)は特別演出。
  * @param {number} streak 現在のコンボ数
  */
 function celebrateCorrect(streak) {
+  const tier = comboTier(streak);
+  const reduced = prefersReducedMotion();
+  const milestone = streak >= 5 && streak % 5 === 0;
+
   const card = document.getElementById("question-card");
   card.classList.remove("flash-correct");
   void card.offsetWidth; // リフロー強制でアニメーション再生
@@ -724,51 +740,124 @@ function celebrateCorrect(streak) {
   const layer = document.getElementById("celebrate-layer");
   if (!layer) return;
   layer.innerHTML = "";
+  layer.className = "celebrate-layer " + tier.cls;
 
-  const hot = streak >= 5;
+  // 画面全体のフラッシュ(ティアが上がるほど強い)
+  const glow = document.createElement("div");
+  glow.className = "celebrate-glow";
+  glow.style.setProperty("--glow-peak", String(Math.min(0.18 + tier.i * 0.1, 0.6)));
+  layer.appendChild(glow);
 
-  // 中央のチェックリング
+  // 中央のリング(ティアの絵文字)
   const ring = document.createElement("div");
-  ring.className = "celebrate-ring" + (hot ? " tier-hot" : "");
-  ring.textContent = streak >= 8 ? "🔥" : "✓";
+  ring.className = "celebrate-ring " + tier.cls;
+  ring.textContent = tier.emoji;
   layer.appendChild(ring);
 
-  // コンボ表示(2連以上)
+  // コンボ表示(2連以上)。数字はstreakが伸びるほど大きく・派手に。
   if (streak >= 2) {
     const badge = document.createElement("div");
-    badge.className = "combo-badge" + (hot ? " tier-hot" : "");
-    const label = streak >= 8 ? "ON FIRE!" : streak >= 5 ? "ナイス連続!" : "コンボ";
-    badge.innerHTML = `<span class="combo-x">×${streak}</span><span class="combo-label">${label}</span>`;
+    badge.className = "combo-badge " + tier.cls + (milestone ? " milestone" : "");
+    const size = Math.min(2.4 + streak * 0.16, 5.5);
+    badge.innerHTML =
+      `<span class="combo-x" style="font-size:${size}rem">×${streak}</span>` +
+      `<span class="combo-label">${milestone ? `${streak}連続達成！` : tier.label}</span>`;
     layer.appendChild(badge);
   }
 
-  // 紙吹雪(コンボに応じて数と広がりを増やす)
-  if (!prefersReducedMotion()) {
-    const count = Math.min(8 + streak * 4, 48);
-    const spread = Math.min(120 + streak * 18, 320);
-    const colors = hot
-      ? ["#e8a32c", "#d8642a", "#f2c14e", "#c2541f"]
-      : ["#3d6b5c", "#2f7a4f", "#8bc6a3", "#e8a32c"];
-    for (let i = 0; i < count; i++) {
+  // 紙吹雪(ティアで数・広がり・形を増やす)
+  if (!reduced) {
+    const base = milestone ? 28 : 12;
+    const count = Math.min(base + streak * 5, 90);
+    const spread = Math.min(140 + streak * 16, 360);
+    for (let k = 0; k < count; k++) {
       const p = document.createElement("div");
-      p.className = "celebrate-particle";
-      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
-      const dist = spread * (0.5 + Math.random() * 0.5);
-      p.style.background = colors[i % colors.length];
+      const shape = k % 3 === 0 ? "circle" : k % 3 === 1 ? "square" : "strip";
+      p.className = `celebrate-particle shape-${shape}`;
+      const angle = (Math.PI * 2 * k) / count + Math.random() * 0.6;
+      const dist = spread * (0.45 + Math.random() * 0.6);
+      p.style.background = tier.colors[k % tier.colors.length];
       p.style.setProperty("--p-x", `${Math.cos(angle) * dist}px`);
-      p.style.setProperty("--p-y", `${Math.sin(angle) * dist - 40}px`);
-      p.style.setProperty("--p-rot", `${Math.random() * 720 - 360}deg`);
-      p.style.setProperty("--p-dur", `${0.7 + Math.random() * 0.5}s`);
+      p.style.setProperty("--p-y", `${Math.sin(angle) * dist - 50}px`);
+      p.style.setProperty("--p-rot", `${Math.random() * 900 - 450}deg`);
+      p.style.setProperty("--p-dur", `${0.8 + Math.random() * 0.7}s`);
       layer.appendChild(p);
+    }
+    // 高ティア(10連〜)はキラキラ絵文字も散らす
+    if (tier.i >= 3) {
+      const sparkles = milestone ? 10 : 6;
+      for (let k = 0; k < sparkles; k++) {
+        const s = document.createElement("div");
+        s.className = "celebrate-spark";
+        s.textContent = ["✨", "⭐", "💥"][k % 3];
+        s.style.left = `${15 + Math.random() * 70}%`;
+        s.style.top = `${20 + Math.random() * 45}%`;
+        s.style.setProperty("--p-dur", `${0.7 + Math.random() * 0.6}s`);
+        layer.appendChild(s);
+      }
     }
   }
 
-  // 1.3秒後にレイヤーを掃除(自動進行より長めに残しても次問描画で消える)
-  setTimeout(() => { if (layer) layer.innerHTML = ""; }, 1400);
+  // 効果音(設定でON時)。連続正解で音も豪華になる。
+  if (engine.getSettings().soundEffects !== false) {
+    playComboSound(streak, milestone);
+  }
+
+  setTimeout(() => { if (layer) layer.innerHTML = ""; }, 1600);
 }
 
 function prefersReducedMotion() {
   return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+// --- 効果音(Web Audio。音源ファイル不要・オフライン可) ----------------------
+
+let audioCtx = null;
+
+/**
+ * 正解の効果音。連続正解(streak)が伸びるほど音数が増え高揚する。節目はファンファーレ。
+ * @param {number} streak
+ * @param {boolean} [milestone]
+ */
+function playComboSound(streak, milestone = false) {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audioCtx = audioCtx || new AC();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+
+    const now = audioCtx.currentTime;
+    const root = 523.25; // C5
+    // 連続数で上昇する音階(メジャー系)。streakが伸びるほど開始音も高く、音数も増える。
+    const major = [0, 2, 4, 7, 9, 12, 14, 16, 19];
+    const startStep = Math.min(Math.floor((streak - 1) / 2), 7);
+    const notes = Math.min(3 + Math.floor(streak / 2), major.length);
+
+    for (let k = 0; k < notes; k++) {
+      const semis = major[Math.min(startStep + k, major.length - 1)];
+      playTone(root * Math.pow(2, semis / 12), now + k * 0.075, 0.18, streak >= 7 ? "triangle" : "sine", 0.12);
+    }
+    // 節目は上にオクターブのきらめきを重ねる
+    if (milestone) {
+      playTone(root * 2, now + notes * 0.075 + 0.02, 0.3, "triangle", 0.13);
+      playTone(root * 3, now + notes * 0.075 + 0.08, 0.3, "sine", 0.09);
+    }
+  } catch {
+    /* 音が出せない環境でも無視 */
+  }
+}
+
+function playTone(freq, startAt, dur, type, peak) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, startAt);
+  gain.gain.linearRampToValueAtTime(peak, startAt + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(startAt);
+  osc.stop(startAt + dur + 0.02);
 }
 
 function handleNextQuestion() {
@@ -851,6 +940,7 @@ function renderSettings() {
   document.getElementById("setting-exclude-vosotros").checked = !!settings.excludeVosotros;
   document.getElementById("setting-choice-ratio").value = String(settings.choiceRatio);
   document.getElementById("setting-require-input-mastery").checked = !!settings.requireInputForMastery;
+  document.getElementById("setting-sound").checked = settings.soundEffects !== false;
   document.getElementById("reset-confirm-row").hidden = true;
 }
 
@@ -874,6 +964,10 @@ function bindSettingsEvents() {
   });
   document.getElementById("setting-require-input-mastery").addEventListener("change", (e) => {
     engine.updateSettings({ requireInputForMastery: e.target.checked });
+  });
+  document.getElementById("setting-sound").addEventListener("change", (e) => {
+    engine.updateSettings({ soundEffects: e.target.checked });
+    if (e.target.checked) playComboSound(2); // ONにしたら試聴
   });
 
   document.getElementById("btn-reset-data").addEventListener("click", () => {

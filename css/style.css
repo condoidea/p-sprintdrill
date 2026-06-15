@@ -1109,15 +1109,90 @@ body {
   100% { box-shadow: var(--shadow-card); }
 }
 
-/* 高コンボ時はリングを暖色寄りに強調 */
-.celebrate-ring.tier-hot { background: linear-gradient(135deg, #e8a32c, #d8642a); box-shadow: 0 6px 28px rgba(216, 100, 42, 0.5); }
-.combo-badge.tier-hot { color: #c2541f; }
+/* 画面全体のフラッシュ(ティアが上がるほど強い。opacityはJSで設定) */
+.celebrate-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 42%, var(--glow-color, rgba(47,122,79,0.9)), transparent 62%);
+  animation: glow-flash 0.7s ease forwards;
+}
+@keyframes glow-flash {
+  0% { transform: scale(0.7); opacity: 0; }
+  25% { opacity: var(--glow-peak, 0.4); }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+
+/* パーティクルの形状バリエーション */
+.celebrate-particle.shape-circle { border-radius: 50%; }
+.celebrate-particle.shape-square { border-radius: 2px; }
+.celebrate-particle.shape-strip { width: 6px; height: 14px; border-radius: 1px; }
+
+/* きらめき絵文字(高ティア) */
+.celebrate-spark {
+  position: absolute;
+  font-size: 1.6rem;
+  will-change: transform, opacity;
+  animation: spark-pop var(--p-dur, 0.9s) ease-out forwards;
+}
+@keyframes spark-pop {
+  0% { transform: scale(0.2) rotate(0deg); opacity: 0; }
+  40% { transform: scale(1.2) rotate(20deg); opacity: 1; }
+  100% { transform: scale(0.9) rotate(-10deg); opacity: 0; }
+}
+
+/* 節目(5の倍数)のコンボはより大きく脈動 */
+.combo-badge.milestone .combo-x { animation: combo-throb 0.5s ease 2; }
+@keyframes combo-throb {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+
+/* ===== コンボ・ティア別の配色 ===== */
+/* base(2-3連): 緑 */
+.tier-base.celebrate-ring { background: var(--color-correct); box-shadow: 0 6px 24px rgba(47,122,79,0.45); }
+.tier-base.combo-badge { color: var(--color-accent-dark); }
+.tier-base .celebrate-glow, .tier-base.celebrate-layer { --glow-color: rgba(47,122,79,0.85); }
+
+/* warm(4-6連): ティール〜緑 */
+.tier-warm.celebrate-ring { background: linear-gradient(135deg, #26a69a, #66bb6a); box-shadow: 0 6px 26px rgba(38,166,154,0.5); }
+.tier-warm.combo-badge { color: #1e8e7e; }
+.tier-warm.celebrate-layer { --glow-color: rgba(38,166,154,0.85); }
+
+/* hot(7-9連): 紫〜藍 */
+.tier-hot.celebrate-ring { background: linear-gradient(135deg, #7e57c2, #5c6bc0); box-shadow: 0 6px 30px rgba(126,87,194,0.55); }
+.tier-hot.combo-badge { color: #6a3fb0; }
+.tier-hot.celebrate-layer { --glow-color: rgba(126,87,194,0.85); }
+
+/* fire(10-14連): オレンジ */
+.tier-fire.celebrate-ring { background: linear-gradient(135deg, #ff9800, #f4511e); box-shadow: 0 8px 32px rgba(244,81,30,0.6); }
+.tier-fire.combo-badge { color: #e8590c; }
+.tier-fire.celebrate-layer { --glow-color: rgba(244,81,30,0.9); }
+
+/* blaze(15-19連): 赤橙 */
+.tier-blaze.celebrate-ring { background: linear-gradient(135deg, #ff7043, #ff5252); box-shadow: 0 8px 36px rgba(255,82,82,0.65); }
+.tier-blaze.combo-badge { color: #e53935; }
+.tier-blaze.celebrate-layer { --glow-color: rgba(255,82,82,0.92); }
+
+/* legend(20連〜): 金〜虹 */
+.tier-legend.celebrate-ring {
+  background: linear-gradient(135deg, #ffd54a, #ff8a3d, #ff5252, #c2185b);
+  box-shadow: 0 10px 40px rgba(255,138,61,0.7);
+  animation: celebrate-pop 0.55s cubic-bezier(0.2,1.4,0.4,1) forwards, legend-spin 1.4s linear;
+}
+.tier-legend.combo-badge { color: #c2185b; }
+.tier-legend.combo-badge .combo-x {
+  background: linear-gradient(135deg, #ffb300, #ff5252, #c2185b);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.tier-legend.celebrate-layer { --glow-color: rgba(255,179,0,0.95); }
+@keyframes legend-spin { to { filter: hue-rotate(40deg); } }
 
 @media (prefers-reduced-motion: reduce) {
   .feedback-backdrop, .feedback-sheet { animation: none; }
   .celebrate-ring { animation: celebrate-pop-reduced 0.4s ease forwards; }
-  .celebrate-particle { display: none; }
+  .celebrate-particle, .celebrate-spark, .celebrate-glow { display: none; }
   .combo-badge { animation: combo-rise-reduced 0.6s ease forwards; }
+  .combo-badge.milestone .combo-x { animation: none; }
   .question-card.flash-correct { animation: none; }
   @keyframes celebrate-pop-reduced { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes combo-rise-reduced { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }

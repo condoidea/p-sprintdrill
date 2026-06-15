@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS = {
   includeGerundio: false, // SPEC 11.1 任意(現在分詞)
   choiceRatio: 0.3, // SPEC 8.2: セッション内で4択を出題する割合(0〜1)
   requireInputForMastery: true, // SPEC 8.2: 習得済み化に入力式の無ヒント正解を最低1回要求する
+  soundEffects: true, // 正解時の効果音(連続正解で高揚感を出す)
 };
 
 // 「ノーヒント正解2回」の間隔条件(SPEC 4-5): 同一セッション内連続は不可。
